@@ -5,6 +5,7 @@ import RuntimeStatus from './RuntimeStatus.jsx'
 import AppPreview from './AppPreview.jsx'
 import RefinementPanel from './RefinementPanel.jsx'
 import { MOCK_APPS } from '../mockData.js'
+import { API_BASE } from '../config.js'
 
 const STAGES = [
   { key: 'intent',      label: 'Intent Mapping',    icon: '🔍' },
@@ -53,7 +54,7 @@ export default function PipelineView({ examplePrompts, selectedApp, setSelectedA
     if (esRef.current) esRef.current.close()
 
     const body = JSON.stringify({ prompt: prompt.trim(), mode })
-    const response = await fetch('/api/generate', {
+    const response = await fetch(`${API_BASE}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body,
@@ -173,7 +174,7 @@ export default function PipelineView({ examplePrompts, selectedApp, setSelectedA
     if (!finalOutput || exporting) return
     setExporting(true)
     try {
-      const response = await fetch('/api/export', {
+      const response = await fetch(`${API_BASE}/api/export`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ current_output: finalOutput }),

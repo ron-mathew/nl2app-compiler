@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { API_BASE } from '../config.js'
 
 export default function EvalDashboard() {
   const [results, setResults] = useState(null)
@@ -9,7 +10,7 @@ export default function EvalDashboard() {
 
   const loadResults = async () => {
     try {
-      const res = await fetch('/api/eval/results')
+      const res = await fetch(`${API_BASE}/api/eval/results`)
       if (res.ok) {
         const data = await res.json()
         setResults(data)
@@ -25,7 +26,7 @@ export default function EvalDashboard() {
     setRunning(true)
     setError(null)
     try {
-      const res = await fetch('/api/eval/run', {
+      const res = await fetch(`${API_BASE}/api/eval/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode, delay_between: 2.0 }),
@@ -37,7 +38,7 @@ export default function EvalDashboard() {
 
       // Poll for results every 5 seconds
       const interval = setInterval(async () => {
-        const statusRes = await fetch('/api/eval/status')
+        const statusRes = await fetch(`${API_BASE}/api/eval/status`)
         const status = await statusRes.json()
         await loadResults()
         if (!status.running) {
