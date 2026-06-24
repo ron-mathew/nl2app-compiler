@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "APISchema",
+  "description": "Stage 3 API config — endpoints, request/response shapes, auth, DB linkage",
+  "type": "object",
+  "required": ["base_path", "version", "endpoints"],
+  "properties": {
+    "base_path": { "type": "string", "pattern": "^/api" },
+    "version": { "type": "string" },
+    "endpoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "method", "path", "auth_required", "db_table", "db_operation"],
+        "properties": {
+          "id": { "type": "string" },
+          "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+          "path": { "type": "string", "pattern": "^/api" },
+          "summary": { "type": "string" },
+          "auth_required": { "type": "boolean" },
+          "required_roles": { "type": "array", "items": { "type": "string" } },
+          "query_params": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "type"],
+              "properties": {
+                "name": { "type": "string" },
+                "type": { "type": "string", "enum": ["string", "integer", "boolean", "number"] },
+                "required": { "type": "boolean" },
+                "default": {}
+              }
+            }
+          },
+          "request_body": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": { "type": "string" },
+                "required": { "type": "boolean" },
+                "format": { "type": "string" },
+                "enum": { "type": "array" }
+              }
+            }
+          },
+          "response": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "db_table": { "type": "string" },
+          "db_operation": { "type": "string", "enum": ["SELECT", "INSERT", "UPDATE", "DELETE", "SELECT+INSERT", "NONE"] },
+          "business_logic": { "type": "string" },
+          "rate_limited": { "type": "boolean" }
+        }
+      }
+    },
+    "middleware": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

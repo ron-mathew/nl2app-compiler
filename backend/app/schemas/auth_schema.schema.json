@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AuthSchema",
+  "description": "Stage 3 Auth config — auth type, tokens, roles, permissions, guards",
+  "type": "object",
+  "required": ["auth_type", "token_expiry", "roles", "route_guards", "permission_matrix"],
+  "properties": {
+    "auth_type": { "type": "string", "enum": ["JWT", "session", "oauth2", "api_key"] },
+    "token_expiry": { "type": "string" },
+    "refresh_token_expiry": { "type": "string" },
+    "token_storage": { "type": "string", "enum": ["httponly_cookie", "localStorage", "sessionStorage"] },
+    "roles": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "default_role": { "type": "string" },
+    "route_guards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["route_pattern", "allowed_roles"],
+        "properties": {
+          "route_pattern": { "type": "string" },
+          "allowed_roles": {
+            "oneOf": [
+              { "type": "string", "enum": ["public", "authenticated"] },
+              { "type": "array", "items": { "type": "string" } }
+            ]
+          },
+          "redirect_on_deny": { "type": "string" }
+        }
+      }
+    },
+    "permission_matrix": {
+      "type": "object",
+      "description": "resource -> action -> roles[]",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "field_level_permissions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "password_policy": {
+      "type": "object",
+      "properties": {
+        "min_length": { "type": "integer" },
+        "require_uppercase": { "type": "boolean" },
+        "require_numbers": { "type": "boolean" },
+        "require_symbols": { "type": "boolean" }
+      }
+    },
+    "oauth_providers": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

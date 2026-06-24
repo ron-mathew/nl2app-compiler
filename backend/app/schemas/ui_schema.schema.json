@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UISchema",
+  "description": "Stage 3 UI config — pages, components, layouts, route guards",
+  "type": "object",
+  "required": ["pages", "global_layout"],
+  "properties": {
+    "global_layout": {
+      "type": "object",
+      "required": ["type", "navigation"],
+      "properties": {
+        "type": { "type": "string", "enum": ["sidebar", "topnav", "minimal", "dashboard"] },
+        "navigation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "route", "icon"],
+            "properties": {
+              "label": { "type": "string" },
+              "route": { "type": "string" },
+              "icon": { "type": "string" },
+              "access_roles": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "theme": { "type": "string", "enum": ["light", "dark", "system"] }
+      }
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "route", "layout", "components"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "route": { "type": "string", "pattern": "^/" },
+          "access_roles": {
+            "oneOf": [
+              { "type": "string", "enum": ["public"] },
+              { "type": "array", "items": { "type": "string" } }
+            ]
+          },
+          "layout": { "type": "string", "enum": ["centered", "sidebar_with_main", "full_width", "split", "dashboard_grid"] },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "type"],
+              "properties": {
+                "id": { "type": "string" },
+                "type": {
+                  "type": "string",
+                  "enum": ["form", "data_table", "card", "chart", "button", "modal", "stats_card", "list", "tabs", "text", "image", "map", "calendar", "kanban"]
+                },
+                "label": { "type": "string" },
+                "data_source": { "type": "string" },
+                "submit_action": { "type": "string" },
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "type"],
+                    "properties": {
+                      "name": { "type": "string" },
+                      "type": { "type": "string", "enum": ["text", "email", "password", "number", "date", "select", "textarea", "checkbox", "radio", "file", "phone"] },
+                      "label": { "type": "string" },
+                      "required": { "type": "boolean" },
+                      "options": { "type": "array", "items": { "type": "string" } },
+                      "placeholder": { "type": "string" }
+                    }
+                  }
+                },
+                "columns": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["field", "label"],
+                    "properties": {
+                      "field": { "type": "string" },
+                      "label": { "type": "string" },
+                      "sortable": { "type": "boolean" },
+                      "filterable": { "type": "boolean" }
+                    }
+                  }
+                },
+                "actions": { "type": "array", "items": { "type": "string" } },
+                "chart_type": { "type": "string", "enum": ["bar", "line", "pie", "donut", "area", "scatter"] },
+                "title": { "type": "string" },
+                "action": { "type": "string" }
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
