@@ -22,7 +22,7 @@ const INITIAL_STAGE_STATE = STAGES.reduce((acc, s) => ({
 
 export default function PipelineView({ examplePrompts, selectedApp, setSelectedApp, customApps, onAppCompiled }) {
   const [prompt, setPrompt] = useState('')
-  const mode = 'balanced'
+  const mode = 'fast'
   const [running, setRunning] = useState(false)
   const [stages, setStages] = useState(INITIAL_STAGE_STATE)
   const [events, setEvents] = useState([])
@@ -30,6 +30,7 @@ export default function PipelineView({ examplePrompts, selectedApp, setSelectedA
   const [activeStageKey, setActiveStageKey] = useState(null)
   const [copied, setCopied] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [pipelineError, setPipelineError] = useState(null)
   const [outputTab, setOutputTab] = useState('preview')  // 'preview' | 'json' | 'debug'
   const esRef = useRef(null)
 
@@ -44,47 +45,54 @@ export default function PipelineView({ examplePrompts, selectedApp, setSelectedA
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim() && !confirm('Prompt is empty — test with edge case behavior?')) return
 
-    setSelectedApp(null) // Clear preset selection when starting a new custom build
-    // Reset state
+    setSelectedApp(null)
     setRunning(true)
     setStages(INITIAL_STAGE_STATE)
     setEvents([])
     setFinalOutput(null)
+    setPipelineError(null)
 
     if (esRef.current) esRef.current.close()
 
-    const body = JSON.stringify({ prompt: prompt.trim(), mode })
-    const response = await fetch(`${API_BASE}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    })
+    try {
+      const body = JSON.stringify({ prompt: prompt.trim(), mode })
+      const response = await fetch(`${API_BASE}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      })
 
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
+      if (!response.ok) {
+        const errText = await response.text()
+        throw new Error(`Backend error ${response.status}: ${errText}`)
+      }
 
-    const processChunk = (chunk) => {
-      buffer += chunk
-      const lines = buffer.split('\n')
-      buffer = lines.pop()
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try {
-            const event = JSON.parse(line.slice(6))
-            handleEvent(event)
-          } catch {}
+      const processChunk = (chunk) => {
+        buffer += chunk
+        const lines = buffer.split('\n')
+        buffer = lines.pop()
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const event = JSON.parse(line.slice(6))
+              handleEvent(event)
+            } catch {}
+          }
         }
       }
-    }
 
-    try {
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
         processChunk(decoder.decode(value, { stream: true }))
       }
+    } catch (err) {
+      setPipelineError(err.message || 'Unknown error — check Render logs')
     } finally {
       setRunning(false)
     }
@@ -211,6 +219,20 @@ export default function PipelineView({ examplePrompts, selectedApp, setSelectedA
   if (!running && !finalOutput) {
     return (
       <div className="main-scrollable blueprint-mesh animate-in">
+        {pipelineError && (
+          <div style={{
+            background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)',
+            borderRadius: '8px', padding: '0.85rem 1.2rem', margin: '1rem 1.5rem 0',
+            color: '#fca5a5', fontSize: '0.82rem', fontFamily: 'monospace',
+            display: 'flex', alignItems: 'flex-start', gap: '0.6rem'
+          }}>
+            <span style={{fontSize:'1rem'}}>⚠️</span>
+            <div>
+              <strong style={{color:'#f87171'}}>Pipeline Error</strong><br/>
+              {pipelineError}
+            </div>
+          </div>
+        )}
         <div className="landing-split">
           {/* Left Column: Intro */}
           <div className="landing-intro">
