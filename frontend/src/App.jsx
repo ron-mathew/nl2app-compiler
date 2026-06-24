@@ -12,7 +12,7 @@ const EXAMPLE_PROMPTS = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('generate')
-  const [selectedApp, setSelectedApp] = useState('NexusCRM') // Default-select NexusCRM
+  const [selectedApp, setSelectedApp] = useState(null) // Start on Create New App
 
   const [customApps, setCustomApps] = useState(() => {
     try {
