@@ -93,7 +93,13 @@ async def generate_app(request: GenerateRequest):
 
     async def event_generator():
         while True:
-            event = await queue.get()
+            try:
+                # Wait up to 10s for an event; if nothing arrives, send a keepalive
+                event = await asyncio.wait_for(queue.get(), timeout=10.0)
+            except asyncio.TimeoutError:
+                # Send keepalive comment to prevent Vercel/nginx from closing idle SSE connections
+                yield {"event": "ping", "data": json.dumps({"type": "ping"})}
+                continue
             if event is None:
                 break
             yield {
@@ -101,7 +107,7 @@ async def generate_app(request: GenerateRequest):
                 "data": json.dumps(event),
             }
 
-    return EventSourceResponse(event_generator())
+    return EventSourceResponse(event_generator(), ping=15)
 
 
 # ──────────────────────────────────────────────────────────────
@@ -158,7 +164,11 @@ async def patch_app(request: PatchRequest):
 
     async def event_generator():
         while True:
-            event = await queue.get()
+            try:
+                event = await asyncio.wait_for(queue.get(), timeout=10.0)
+            except asyncio.TimeoutError:
+                yield {"event": "ping", "data": json.dumps({"type": "ping"})}
+                continue
             if event is None:
                 break
             yield {
@@ -166,7 +176,7 @@ async def patch_app(request: PatchRequest):
                 "data": json.dumps(event),
             }
 
-    return EventSourceResponse(event_generator())
+    return EventSourceResponse(event_generator(), ping=15)
 
 
 class ExportRequest(BaseModel):

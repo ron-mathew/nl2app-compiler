@@ -112,8 +112,9 @@ export default function PipelineView({ examplePrompts, selectedApp, setSelectedA
   }, [selectedApp, setSelectedApp, customApps])
 
   const handleEvent = useCallback((event) => {
-    addEvent(event)
     const type = event.type
+    if (type === 'ping') return  // keepalive — ignore silently
+    addEvent(event)
 
     if (type === 'stage_start') {
       updateStage(event.stage, { status: 'active' })
